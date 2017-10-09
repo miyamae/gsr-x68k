@@ -1,0 +1,114 @@
+*---------------------------------------*
+KEYCHK	.macro	n1,n2			;キー押下チェック
+	moveq.l	n1,d1
+	IOCS	_BITSNS
+	btst.l	n2,d0
+	.endm
+*---------------------------------------*
+PRINT	.macro	param			;文字列表示
+	move.l	d0,-(sp)
+	move.l	param,-(sp)
+	DOS	_PRINT
+	addq.l	#4,sp
+	move.l	(sp)+,d0
+	.endm
+*---------------------------------------*
+SPRINT	.macro	x,y,param		;12x12dot 縮小文字列表示
+	movem.l	d6-d7/a6,-(sp)
+	move.l	x,d6
+	move.l	y,d7
+	movea.l	param,a6
+	jsr	prs_print_12x12
+	movem.l	(sp)+,d6-d7/a6
+	.endm
+*---------------------------------------*
+SSPRINT	.macro	x,y,param		;4x8dot 超縮小文字列表示
+	movem.l	d6-d7/a6,-(sp)
+	move.l	x,d6
+	move.l	y,d7
+	movea.l	param,a6
+	jsr	print_4x8font
+	movem.l	(sp)+,d6-d7/a6
+	.endm
+*---------------------------------------*
+HPRINT	.macro	x,y,param		;8x16 高速文字列表示
+	movem.l	d6-d7/a6,-(sp)
+	move.l	x,d6
+	move.l	y,d7
+	movea.l	param,a6
+	jsr	print_8x16font
+	movem.l	(sp)+,d6-d7/a6
+	.endm
+*---------------------------------------*
+HSPRINT	.macro	x,y,param		;8x16 斜体文字列表示
+	movem.l	d6-d7/a6,-(sp)
+	move.l	x,d6
+	move.l	y,d7
+	movea.l	param,a6
+	jsr	print_8x16_s_font
+	movem.l	(sp)+,d6-d7/a6
+	.endm
+*---------------------------------------*
+SEG7	.macro	x,y,param		;７セグメント文字列表示
+	movem.l	d6-d7/a6,-(sp)
+	move.l	x,d6
+	move.l	y,d7
+	movea.l	param,a6
+	jsr	print_7seg
+	movem.l	(sp)+,d6-d7/a6
+	.endm
+*---------------------------------------*
+CRLF	.macro				;改行
+	move.w	$0d,-(sp)
+	DOS	_PRINT
+	addq.l	#2,sp
+	move.w	$0a,-(sp)
+	DOS	_PRINT
+	addq.l	#2,sp
+	.endm
+*---------------------------------------*
+LOCATE	.macro	x,y			;カーソル位置変更
+	movem.l	d0-d2,-(sp)
+	move.w	x,d1
+	move.w	y,d2
+	IOCS	_B_LOCATE
+	movem.l	(sp)+,d0-d2
+	.endm
+*---------------------------------------*
+RANDOM	.macro	param,reg		;０から指定値までの乱数
+	.dc.w	$fe0e
+	divu.w	param,reg
+	clr.w	reg
+	swap.w	reg
+	.endm
+*---------------------------------------*
+LOOKREG	.macro	reg			;レジスタ内容を１０進表示
+	pea	tbuf
+	move.l	reg,-(sp)
+	jsr	bin_adec
+	addq.l	#8,sp
+	PRINT	tbuf
+	.endm
+*---------------------------------------*
+BEEP	.macro				;BEEP音出力
+	move.w	#$07,-(sp)
+	clr.w	-(sp)
+	DOS	_CONCTRL
+	addq.l	#4,sp
+	.endm
+*---------------------------------------*
+RANDOM	.macro	param,reg		;０から指定値までの乱数
+	.dc.w	$fe0e
+	divu.w	param,reg
+	swap.w	reg
+	.endm
+*---------------------------------------*
+UPPER	.macro	reg			;英大文字に変換
+	.local	done
+	cmp.b	#'a',reg
+	bcs	done
+	cmp.b	#'z',reg
+	bcc	done
+	subi.b	#$20,reg
+done:
+	.endm
